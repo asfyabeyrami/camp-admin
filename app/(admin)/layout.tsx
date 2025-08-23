@@ -1,8 +1,11 @@
 "use client";
+
 import Cookies from "js-cookie";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
-import "./globals.css";
+import { useEffect, useState } from "react";
+import Sidebar from "@/components/sidebar";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 const NEXT_PUBLIC_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export default function AdminLayout({
@@ -12,14 +15,14 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       const token = Cookies.get("token");
 
-      if (!token) {
-        return router.push("/login");
-      }
+      if (!token) return router.push("/login");
       try {
         const res = await fetch(`${NEXT_PUBLIC_BASE_URL}/admin/getAdmin`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -51,11 +54,33 @@ export default function AdminLayout({
     };
 
     checkAuth();
-  }, [router, pathname]);
+  }, [pathname, router]);
 
   return (
-    <html lang="fa" dir="rtl">
-      <body className="font-vazir bg-slate-100 text-right">{children}</body>
-    </html>
+    <div className="flex min-h-screen bg-muted text-right font-sans">
+      <Sidebar
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+      />
+      <Button
+        size="icon"
+        variant="default"
+        onClick={() => setMobileOpen(true)}
+        className={`md:hidden fixed top-4 right-4 z-50 ${
+          mobileOpen ? "hidden" : ""
+        }`}
+      >
+        <Menu />
+      </Button>
+      <main
+        className={`flex-1 transition-all duration-300 p-4 sm:p-6 md:p-8 ${
+          collapsed ? "md:mr-20" : "md:mr-64"
+        }`}
+      >
+        {children}
+      </main>
+    </div>
   );
 }
