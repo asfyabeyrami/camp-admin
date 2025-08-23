@@ -76,7 +76,7 @@ const Sidebar = ({ collapsed, mobileOpen, setMobileOpen }: SidebarProps) => {
         <div className="p-6 border-b flex items-center justify-between">
           {!collapsed && (
             <h1 className="text-2xl font-extrabold text-primary select-none">
-              camping
+              کوه نگار
             </h1>
           )}
         </div>
