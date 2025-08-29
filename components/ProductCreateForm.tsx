@@ -830,7 +830,7 @@ export default function ProductCreateForm() {
               توضیحات کامل
             </Label>
             <Editor
-              apiKey="jdzgmpo5yskgqy6fppsq5zbw64a3n8lufg7rp1jg9t2v82sx"
+              apiKey="yw03fqi9za918p3jhar6jjb4ou0n370z1xchlhfum0ynp81z"
               value={form.description.text}
               init={{
                 directionality: "rtl",
