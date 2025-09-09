@@ -62,7 +62,7 @@ export default function ProductFeaturesBox({
     if (!productId) return;
     setFeaturesLoading(true);
     // --- به API خودت بزن! (نمونه محلی صرفا)
-    fetch("/api/feature?productId=" + productId)
+    fetch("/feature?productId=" + productId)
       .then((r) => r.json())
       .then((data) => setFeatures(data.features || []))
       .catch(() => setFeatures([]))
@@ -124,7 +124,7 @@ export default function ProductFeaturesBox({
   const handleFeatureDelete = (f: Feature) => {
     if (!window.confirm("آیا از حذف این ویژگی اطمینان دارید؟")) return;
     setFeaturesLoading(true);
-    fetch(`/api/feature/${f.id}`, { method: "DELETE" })
+    fetch(`/feature/${f.id}`, { method: "DELETE" })
       .then(() => {
         setFeatures((cur) => cur.filter((x) => x.id !== f.id));
       })
@@ -142,7 +142,7 @@ export default function ProductFeaturesBox({
         FeatureValue: featureForm.values,
       };
       if (featuresEditId) {
-        await fetch(`/api/feature/${featuresEditId}`, {
+        await fetch(`/feature/${featuresEditId}`, {
           method: "PUT",
           body: JSON.stringify(newFeature),
         });
@@ -150,7 +150,7 @@ export default function ProductFeaturesBox({
           old.map((f) => (f.id === featuresEditId ? newFeature : f))
         );
       } else {
-        await fetch("/api/feature", {
+        await fetch("/feature", {
           method: "POST",
           body: JSON.stringify(newFeature),
         });
