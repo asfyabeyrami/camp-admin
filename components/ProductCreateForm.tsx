@@ -217,9 +217,9 @@ export default function ProductCreateForm() {
     (async () => {
       try {
         const [cat, tag, del] = await Promise.all([
-          axios.get("https://api.pooladmotor.com/category/getAllCategory"),
-          axios.get("https://api.pooladmotor.com/tag"),
-          axios.get("https://api.pooladmotor.com/delivery/delivery"),
+          axios.get("https://api.koohnegar.com/category/getAllCategory"),
+          axios.get("https://api.koohnegar.com/tag"),
+          axios.get("https://api.koohnegar.com/delivery/delivery"),
         ]);
         setCategoryOptions(
           cat.data.data.map((c: any) => ({ value: c.id, label: c.title }))
@@ -246,7 +246,7 @@ export default function ProductCreateForm() {
     (async () => {
       try {
         const res = await axios.get(
-          `https://api.pooladmotor.com/product/${realProductId}`
+          `https://api.koohnegar.com/product/${realProductId}`
         );
         const p: Product = res.data.data;
         setGallery(p.media_item || []);
@@ -342,7 +342,7 @@ export default function ProductCreateForm() {
 
       if (!realProductId) {
         const res = await axios.post(
-          "https://api.pooladmotor.com/product/create",
+          "https://api.koohnegar.com/product/create",
           payload,
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -356,7 +356,7 @@ export default function ProductCreateForm() {
         setStep(2);
       } else {
         await axios.put(
-          `https://api.pooladmotor.com/product/update/${realProductId}`,
+          `https://api.koohnegar.com/product/update/${realProductId}`,
           payload,
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -397,7 +397,7 @@ export default function ProductCreateForm() {
     formData.append("description", form.name || "محصول");
     try {
       await axios.post(
-        "https://api.pooladmotor.com/media/uploadProduct",
+        "https://api.koohnegar.com/media/uploadProduct",
         formData,
         {
           headers: {
@@ -407,7 +407,7 @@ export default function ProductCreateForm() {
         }
       );
       const res = await axios.get(
-        `https://api.pooladmotor.com/product/${realProductId}`
+        `https://api.koohnegar.com/product/${realProductId}`
       );
       setGallery(res.data.data.media_item || []);
       setMessage({ text: "تصویر با موفقیت آپلود شد", type: "success" });
@@ -425,14 +425,11 @@ export default function ProductCreateForm() {
       return;
     }
     try {
-      await axios.delete(
-        `https://api.pooladmotor.com/media/delete/${mediaId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await axios.delete(`https://api.koohnegar.com/media/delete/${mediaId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const res = await axios.get(
-        `https://api.pooladmotor.com/product/${realProductId}`
+        `https://api.koohnegar.com/product/${realProductId}`
       );
       setGallery(res.data.data.media_item || []);
       setMessage({ text: "تصویر حذف شد", type: "success" });
@@ -873,7 +870,7 @@ export default function ProductCreateForm() {
                       className="relative rounded-xl border border-gray-300 bg-white hover:shadow-xl overflow-hidden flex items-center justify-center w-[92px] h-[92px] cursor-pointer transition group"
                     >
                       <img
-                        src={`https://api.pooladmotor.com/media/${
+                        src={`https://api.koohnegar.com/media/${
                           item.media?.url || item.url
                         }`}
                         alt={item.alt || "تصویر محصول"}
