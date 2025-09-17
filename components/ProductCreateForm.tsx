@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import type { CategoryItem, Product } from "@/types/type";
 import ProductFeaturesBox from "./ProductFeaturesBox";
+import { slugify } from "./slugify.util";
 
 // Type fallback (اگر در "@/types/type" نداری)
 
@@ -327,6 +328,8 @@ export default function ProductCreateForm() {
     setLoading(true);
     setMessage(null);
     try {
+      const baseCanonical = "https://koohnegar.com/";
+      const canonicalUrl = baseCanonical + slugify(form.slug);
       // دسته‌های نهایی (فقط leafها)
       const finalCategoryIds = categoryPaths
         .map((path) => path.at(-1))
@@ -334,6 +337,7 @@ export default function ProductCreateForm() {
 
       const payload = {
         ...form,
+        canonicalUrl: canonicalUrl,
         categoryId: finalCategoryIds,
         count: parseInt(form.count),
         price: parseInt(form.price.replace(/,/g, "")),
@@ -777,16 +781,6 @@ export default function ProductCreateForm() {
                       id="ogDescription"
                       name="ogDescription"
                       value={form.ogDescription}
-                      onChange={handleChange}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label htmlFor="canonicalUrl">Canonical URL</Label>
-                    <Input
-                      id="canonicalUrl"
-                      name="canonicalUrl"
-                      value={form.canonicalUrl}
                       onChange={handleChange}
                       className="mt-1"
                     />

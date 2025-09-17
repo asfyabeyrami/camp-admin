@@ -1,5 +1,7 @@
 "use client";
 import * as React from "react";
+import axios from "axios";
+import Cookies from "js-cookie";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +18,9 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
+// === TYPE DEFINITIONS ===
 type FeatureValue = {
+  id?: string;
   name: string;
   rate: string;
   Length: string;
@@ -27,13 +31,22 @@ type FeatureValue = {
 type Feature = {
   id: string;
   feature: string;
-  FeatureValue: FeatureValue[];
+  values: FeatureValue[];
 };
+
+type ProductFeaturesBoxProps = {
+  productId: string;
+};
+
+function formatMoneyInput(value: string): string {
+  let cleaned = value.replace(/[^\d]/g, "");
+  if (!cleaned) return "";
+  return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 export default function ProductFeaturesBox({
   productId,
-}: {
-  productId: string;
-}) {
+}: ProductFeaturesBoxProps) {
   // STATES
   const [features, setFeatures] = React.useState<Feature[]>([]);
   const [featuresLoading, setFeaturesLoading] = React.useState(false);
@@ -41,6 +54,7 @@ export default function ProductFeaturesBox({
     null
   );
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
   const [featureForm, setFeatureForm] = React.useState<{
     feature: string;
     values: FeatureValue[];
@@ -57,18 +71,41 @@ export default function ProductFeaturesBox({
       },
     ],
   });
+
   // LOAD FEATURES
   React.useEffect(() => {
     if (!productId) return;
     setFeaturesLoading(true);
-    // --- به API خودت بزن! (نمونه محلی صرفا)
-    fetch("/feature?productId=" + productId)
-      .then((r) => r.json())
-      .then((data) => setFeatures(data.features || []))
+    setErrorMsg(null);
+    axios
+      .get(`https://api.koohnegar.com/product/${productId}/feature`)
+      .then((res) => {
+        // Backward compatibility for value shape
+        // API may respond with: feature, FeatureValue, id
+        setFeatures(
+          (res.data.data || []).map((f: any) => ({
+            id: f.id,
+            feature: f.feature,
+            values: (f.values || f.FeatureValue || []).map((v: any) => ({
+              id: v.id,
+              name: v.name || "",
+              rate: v.rate ? String(v.rate) : "",
+              Length: v.Length ? String(v.Length) : "",
+              Width: v.Width ? String(v.Width) : "",
+              Height: v.Height ? String(v.Height) : "",
+              stock_quantity:
+                typeof v.stock_quantity === "undefined"
+                  ? ""
+                  : String(v.stock_quantity),
+            })),
+          }))
+        );
+      })
       .catch(() => setFeatures([]))
       .finally(() => setFeaturesLoading(false));
   }, [productId]);
-  // HANDLE INPUTs
+
+  // هندل ورودی
   const handleFeatureInput = (
     field: keyof FeatureValue,
     val: string,
@@ -81,7 +118,8 @@ export default function ProductFeaturesBox({
       ),
     }));
   };
-  // اضافه ردیف جدید مقدار
+
+  // اضافه ردیف مقدار
   const handleFeatureRowAdd = () => {
     setFeatureForm((prev) => ({
       ...prev,
@@ -98,6 +136,7 @@ export default function ProductFeaturesBox({
       ],
     }));
   };
+
   // حذف مقدار
   const handleFeatureRowRemove = (idx: number) => {
     setFeatureForm((prev) => ({
@@ -105,12 +144,14 @@ export default function ProductFeaturesBox({
       values: prev.values.filter((_, i) => i !== idx),
     }));
   };
+
   // شروع ویرایش یک ویژگی
   const handleFeatureEditBegin = (f: Feature) => {
     setFeaturesEditId(f.id);
     setFeatureForm({
       feature: f.feature,
-      values: f.FeatureValue.map((v) => ({
+      values: (f.values || []).map((v) => ({
+        id: v.id,
         name: v.name,
         rate: v.rate,
         Length: v.Length,
@@ -120,42 +161,103 @@ export default function ProductFeaturesBox({
       })),
     });
   };
+
   // حذف ویژگی
-  const handleFeatureDelete = (f: Feature) => {
+  const handleFeatureDelete = async (f: Feature) => {
     if (!window.confirm("آیا از حذف این ویژگی اطمینان دارید؟")) return;
     setFeaturesLoading(true);
-    fetch(`/feature/${f.id}`, { method: "DELETE" })
-      .then(() => {
-        setFeatures((cur) => cur.filter((x) => x.id !== f.id));
-      })
-      .catch(() => setErrorMsg("حذف ویژگی شکست خورد!"))
-      .finally(() => setFeaturesLoading(false));
+    setErrorMsg(null);
+    try {
+      const token = Cookies.get("token");
+      await axios.delete(`https://api.koohnegar.com/product/feature/${f.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFeatures((cur) => cur.filter((x) => x.id !== f.id));
+    } catch {
+      setErrorMsg("حذف ویژگی شکست خورد!");
+    }
+    setFeaturesLoading(false);
+  };
+  // هندلر ورودی rate فقط
+  const handleRateInput = (val: string, idx: number) => {
+    const formatted = formatMoneyInput(val);
+    setFeatureForm((prev) => ({
+      ...prev,
+      values: prev.values.map((v, i) =>
+        i === idx ? { ...v, rate: formatted } : v
+      ),
+    }));
   };
   // افزودن یا ویرایش ویژگی
   const handleFeatureSubmit = async () => {
     setFeaturesLoading(true);
     setErrorMsg(null);
     try {
-      let newFeature: Feature = {
-        id: featuresEditId || Math.random().toString(36).slice(2),
-        feature: featureForm.feature,
-        FeatureValue: featureForm.values,
-      };
+      const token = Cookies.get("token");
+      // Format for API: values <-> values
+      const values = featureForm.values.map((v) => {
+        // فقط وقتی فیلد عددی خالی نیست اضافه کن
+        const obj: any = {
+          ...(v.id ? { id: v.id } : {}),
+          name: v.name,
+        };
+        if (v.rate !== "") obj.rate = v.rate.replace(/,/g, "");
+        if (v.Length !== "") obj.Length = v.Length;
+        if (v.Width !== "") obj.Width = v.Width;
+        if (v.Height !== "") obj.Height = v.Height;
+        if (v.stock_quantity !== "")
+          obj.stock_quantity = Number(v.stock_quantity);
+        return obj;
+      });
       if (featuresEditId) {
-        await fetch(`/feature/${featuresEditId}`, {
-          method: "PUT",
-          body: JSON.stringify(newFeature),
-        });
-        setFeatures((old) =>
-          old.map((f) => (f.id === featuresEditId ? newFeature : f))
+        // PUT
+        await axios.put(
+          `https://api.koohnegar.com/product/feature/${featuresEditId}`,
+          {
+            feature: featureForm.feature,
+            values,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
       } else {
-        await fetch("/feature", {
-          method: "POST",
-          body: JSON.stringify(newFeature),
-        });
-        setFeatures((old) => [...old, newFeature]);
+        // POST - v2 api wants productId in body
+        await axios.post(
+          `https://api.koohnegar.com/product/${productId}/feature`,
+          {
+            productId,
+            feature: featureForm.feature,
+            values,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
       }
+      // ریلود کن
+      const res = await axios.get(
+        `https://api.koohnegar.com/product/${productId}/feature`
+      );
+      setFeatures(
+        (res.data.data || []).map((f: any) => ({
+          id: f.id,
+          feature: f.feature,
+          values: (f.values || f.FeatureValue || []).map((v: any) => ({
+            id: v.id,
+            name: v.name || "",
+            rate: v.rate ? String(v.rate) : "",
+            Length: v.Length ? String(v.Length) : "",
+            Width: v.Width ? String(v.Width) : "",
+            Height: v.Height ? String(v.Height) : "",
+            stock_quantity:
+              typeof v.stock_quantity === "undefined"
+                ? ""
+                : String(v.stock_quantity),
+          })),
+        }))
+      );
+      // پاک کن
       setFeaturesEditId(null);
       setFeatureForm({
         feature: "",
@@ -175,6 +277,7 @@ export default function ProductFeaturesBox({
     }
     setFeaturesLoading(false);
   };
+
   return (
     <Card className="border-gray-100 border rounded-2xl">
       <CardHeader>
@@ -218,27 +321,22 @@ export default function ProductFeaturesBox({
                       {f.feature}
                     </TableCell>
                     <TableCell>
-                      {(f.FeatureValue || []).map((v) => v.name).join("، ") ||
-                        "-"}
+                      {(f.values || []).map((v) => v.name).join("، ") || "-"}
                     </TableCell>
                     <TableCell>
-                      {(f.FeatureValue || []).map((v) => v.rate).join("، ") ||
-                        "-"}
+                      {(f.values || []).map((v) => v.rate).join("، ") || "-"}
                     </TableCell>
                     <TableCell>
-                      {(f.FeatureValue || []).map((v) => v.Length).join("، ") ||
-                        "-"}
+                      {(f.values || []).map((v) => v.Length).join("، ") || "-"}
                     </TableCell>
                     <TableCell>
-                      {(f.FeatureValue || []).map((v) => v.Width).join("، ") ||
-                        "-"}
+                      {(f.values || []).map((v) => v.Width).join("، ") || "-"}
                     </TableCell>
                     <TableCell>
-                      {(f.FeatureValue || []).map((v) => v.Height).join("، ") ||
-                        "-"}
+                      {(f.values || []).map((v) => v.Height).join("، ") || "-"}
                     </TableCell>
                     <TableCell>
-                      {(f.FeatureValue || [])
+                      {(f.values || [])
                         .map((v) => v.stock_quantity)
                         .join("، ") || "-"}
                     </TableCell>
@@ -316,13 +414,13 @@ export default function ProductFeaturesBox({
                   required
                 />
                 <Input
-                  className="w-16 rounded-md"
+                  className="w-28 rounded-md" // بزرگ‌تر
                   placeholder="rate"
                   value={v.rate}
-                  type="number"
-                  onChange={(e) =>
-                    handleFeatureInput("rate", e.target.value, idx)
-                  }
+                  type="text"
+                  inputMode="numeric"
+                  dir="ltr"
+                  onChange={(e) => handleRateInput(e.target.value, idx)}
                 />
                 <Input
                   className="w-16 rounded-md"
