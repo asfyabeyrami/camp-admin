@@ -328,7 +328,7 @@ export default function ProductCreateForm() {
     setLoading(true);
     setMessage(null);
     try {
-      const baseCanonical = "https://koohnegar.com/";
+      const baseCanonical = "https://koohnegar.com/product/";
       const canonicalUrl = baseCanonical + slugify(form.slug);
       // دسته‌های نهایی (فقط leafها)
       const finalCategoryIds = categoryPaths
