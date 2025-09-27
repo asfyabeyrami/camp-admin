@@ -22,7 +22,6 @@ const defaultFormState = {
   fatherId: null as string | null,
   metaTitle: "",
   metaDescription: "",
-  metaKeywords: "",
   ogTitle: "",
   ogDescription: "",
   canonicalUrl: "",
@@ -42,7 +41,6 @@ interface CategoryNode {
   description?: { text: string } | null;
   metaTitle?: string;
   metaDescription?: string;
-  metaKeywords?: string;
   ogTitle?: string;
   ogDescription?: string;
   canonicalUrl?: string;
@@ -136,9 +134,8 @@ const CreateCategoryPage: React.FC = () => {
         fatherId: form.fatherId,
         metaTitle: form.metaTitle,
         metaDescription: form.metaDescription,
-        metaKeywords: form.metaKeywords,
-        ogTitle: form.ogTitle,
-        ogDescription: form.ogDescription,
+        ogTitle: form.metaTitle,
+        ogDescription: form.metaDescription,
         canonicalUrl,
         altText: form.altText,
         structuredData: structuredDataObj,
@@ -272,7 +269,6 @@ const CreateCategoryPage: React.FC = () => {
       fatherId: cat.fatherId,
       metaTitle: cat.metaTitle || "",
       metaDescription: cat.metaDescription || "",
-      metaKeywords: cat.metaKeywords || "",
       ogTitle: cat.ogTitle || "",
       ogDescription: cat.ogDescription || "",
       canonicalUrl: cat.canonicalUrl || "",
@@ -497,34 +493,6 @@ const CreateCategoryPage: React.FC = () => {
                   id="metaDescription"
                   name="metaDescription"
                   value={form.metaDescription}
-                  onChange={handleSeoChange}
-                  rows={2}
-                />
-              </div>
-              <div>
-                <Label htmlFor="metaKeywords">کلمات کلیدی متا</Label>
-                <Input
-                  id="metaKeywords"
-                  name="metaKeywords"
-                  value={form.metaKeywords}
-                  onChange={handleSeoChange}
-                />
-              </div>
-              <div>
-                <Label htmlFor="ogTitle">OG Title</Label>
-                <Input
-                  id="ogTitle"
-                  name="ogTitle"
-                  value={form.ogTitle}
-                  onChange={handleSeoChange}
-                />
-              </div>
-              <div>
-                <Label htmlFor="ogDescription">OG Description</Label>
-                <Textarea
-                  id="ogDescription"
-                  name="ogDescription"
-                  value={form.ogDescription}
                   onChange={handleSeoChange}
                   rows={2}
                 />
