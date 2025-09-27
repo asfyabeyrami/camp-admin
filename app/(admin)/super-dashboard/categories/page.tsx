@@ -1,5 +1,6 @@
 "use client";
 import CustomTreeSelect from "@/components/CustomTreeSelect";
+import { slugify } from "@/components/slugify.util";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -120,6 +121,15 @@ const CreateCategoryPage: React.FC = () => {
       return;
     }
     try {
+      const baseCanonical = "https://koohnegar.com/product/";
+
+      let canonicalUrl = form.canonicalUrl?.trim();
+
+      if (!canonicalUrl) {
+        canonicalUrl = baseCanonical + slugify(form.title);
+      } else {
+        canonicalUrl = baseCanonical + slugify(canonicalUrl);
+      }
       const body = {
         title: form.title,
         description: form.description ? { text: form.description } : null,
@@ -129,7 +139,7 @@ const CreateCategoryPage: React.FC = () => {
         metaKeywords: form.metaKeywords,
         ogTitle: form.ogTitle,
         ogDescription: form.ogDescription,
-        canonicalUrl: form.canonicalUrl,
+        canonicalUrl,
         altText: form.altText,
         structuredData: structuredDataObj,
       };

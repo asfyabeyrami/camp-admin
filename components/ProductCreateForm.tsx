@@ -187,7 +187,6 @@ export default function ProductCreateForm() {
     deliveryId: "",
     metaTitle: "",
     metaDescription: "",
-    metaKeywords: "",
     ogTitle: "",
     ogDescription: "",
     canonicalUrl: "",
@@ -329,19 +328,25 @@ export default function ProductCreateForm() {
     setMessage(null);
     try {
       const baseCanonical = "https://koohnegar.com/product/";
-      const canonicalUrl = baseCanonical + slugify(form.slug);
-      // دسته‌های نهایی (فقط leafها)
+      let canonicalUrl = form.canonicalUrl?.trim();
+      if (!canonicalUrl) {
+        canonicalUrl = baseCanonical + slugify(form.name);
+      } else {
+        canonicalUrl = baseCanonical + slugify(canonicalUrl);
+      }
       const finalCategoryIds = categoryPaths
         .map((path) => path.at(-1))
         .filter(Boolean);
 
       const payload = {
         ...form,
-        canonicalUrl: canonicalUrl,
+        canonicalUrl,
         categoryId: finalCategoryIds,
         count: parseInt(form.count),
         price: parseInt(form.price.replace(/,/g, "")),
         off: form.off ? parseInt(form.off) : undefined,
+        ogTitle: form.metaTitle?.trim() || "",
+        ogDescription: form.metaDescription?.trim() || "",
       };
 
       if (!realProductId) {
@@ -756,33 +761,13 @@ export default function ProductCreateForm() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="metaKeywords">کلمات کلیدی متا</Label>
+                    <Label htmlFor="canonicalUrl">Canonical URL</Label>
                     <Input
-                      id="metaKeywords"
-                      name="metaKeywords"
-                      value={form.metaKeywords}
+                      id="canonicalUrl"
+                      name="canonicalUrl"
+                      value={form.canonicalUrl}
                       onChange={handleChange}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="ogTitle">OG Title</Label>
-                    <Input
-                      id="ogTitle"
-                      name="ogTitle"
-                      value={form.ogTitle}
-                      onChange={handleChange}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="ogDescription">OG Description</Label>
-                    <Textarea
-                      id="ogDescription"
-                      name="ogDescription"
-                      value={form.ogDescription}
-                      onChange={handleChange}
-                      className="mt-1"
+                      placeholder="https://koohnegar.com/product/..."
                     />
                   </div>
                   <div className="md:col-span-2">
