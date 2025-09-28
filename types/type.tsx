@@ -98,18 +98,33 @@ export type FeatureValue = {
   Height?: Dimensions;
   stock_quantity?: number;
 };
-export type Feature = {
-  id: string;
-  productId: string;
-  feature: string;
-  FeatureValue: FeatureValue[];
-};
 export type Delivery = { id: string; name: string };
-export type Product = {
+
+export interface ProductAttributeValue {
+  id: string;
+  value: string;
+}
+
+export interface ProductAttribute {
+  id: string;
+  name: string;
+  values: ProductAttributeValue[];
+}
+
+export interface Variation {
+  id?: string;
+  sku: string;
+  price: number;
+  count: number;
+  off?: number;
+  attributes: string[]; // ProductAttributeValue ids
+}
+export interface Product {
   id: string;
   code: number;
   name: string;
   slug: string;
+  type: ProductType;
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string;
@@ -123,15 +138,17 @@ export type Product = {
   count: number;
   price: number;
   off: number;
-  description: { text: string };
+  description: { text: string }; // باید با بک‌اند هماهنگ باشد
   createdAt: string;
   updatedAt: string;
   media_item: MediaItem[];
   CategoriesOnProduct: CategoryOnProduct[];
   tagOnProduct: TagOnProduct[];
-  Delivery: Delivery;
-  Feature: Feature[];
-};
+  Delivery?: Delivery;
+  ProductAttribute?: ProductAttribute;
+  Variation?: Variation[];
+}
+
 export interface CategoryItem {
   id: string;
   title: string;
@@ -151,4 +168,8 @@ export interface CategoryItem {
   parent?: CategoryItem | null;
   children?: CategoryItem[];
   // Add any other fields you need from your API here
+}
+export enum ProductType {
+  SIMPLE = "SIMPLE",
+  VARIABLE = "VARIABLE",
 }
